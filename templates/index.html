@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+```
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Student Performance Analytics</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+
+        margin: 0;
+
+        font-family:
+            "Segoe UI",
+            Arial,
+            sans-serif;
+
+        background:
+            #0b1120;
+
+        color:
+            #e5e7eb;
+    }
+
+    /* =====================================================
+       SIDEBAR
+       ===================================================== */
+
+    .sidebar {
+
+        position: fixed;
+
+        left: 0;
+        top: 0;
+
+        width: 240px;
+        height: 100vh;
+
+        background:
+            #111827;
+
+        border-right:
+            1px solid #1f2937;
+
+        padding: 25px 18px;
+    }
+
+    .logo {
+
+        font-size: 21px;
+
+        font-weight: 700;
+
+        margin-bottom: 40px;
+
+        color: #60a5fa;
+    }
+
+    .logo span {
+
+        color: #f9fafb;
+    }
+
+    .nav-item {
+
+        display: block;
+
+        padding: 12px 15px;
+
+        margin-bottom: 8px;
+
+        border-radius: 8px;
+
+        color: #9ca3af;
+
+        text-decoration: none;
+
+        font-size: 14px;
+    }
+
+    .nav-item.active,
+    .nav-item:hover {
+
+        background:
+            #1e3a5f;
+
+        color:
+            #60a5fa;
+    }
+
+    /* =====================================================
+       MAIN CONTENT
+       ===================================================== */
+
+    .main {
+
+        margin-left: 240px;
+
+        padding: 30px;
+
+        min-height: 100vh;
+    }
+
+    .header {
+
+        display: flex;
+
+        justify-content:
+            space-between;
+
+        align-items:
+            center;
+
+        margin-bottom: 30px;
+    }
+
+    .header h1 {
+
+        margin: 0;
+
+        font-size: 28px;
+
+        color: #f9fafb;
+    }
+
+    .header p {
+
+        margin-top: 7px;
+
+        color: #9ca3af;
+
+        font-size: 14px;
+    }
+
+    /* =====================================================
+       STAT CARDS
+       ===================================================== */
+
+    .stats {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, 1fr);
+
+        gap: 18px;
+
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+
+        background:
+            #111827;
+
+        border:
+            1px solid #1f2937;
+
+        border-radius:
+            12px;
+
+        padding:
+            20px;
+
+        box-shadow:
+            0 8px 25px
+            rgba(0,0,0,0.2);
+    }
+
+    .stat-title {
+
+        color:
+            #9ca3af;
+
+        font-size:
+            13px;
+
+        margin-bottom:
+            10px;
+    }
+
+    .stat-value {
+
+        font-size:
+            27px;
+
+        font-weight:
+            700;
+
+        color:
+            #f9fafb;
+    }
+
+    /* =====================================================
+       GRID
+       ===================================================== */
+
+    .grid {
+
+        display:
+            grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap:
+            20px;
+
+        margin-bottom:
+            20px;
+    }
+
+    .card {
+
+        background:
+            #111827;
+
+        border:
+            1px solid #1f2937;
+
+        border-radius:
+            12px;
+
+        padding:
+            22px;
+
+        box-shadow:
+            0 8px 25px
+            rgba(0,0,0,0.2);
+    }
+
+    .card h2 {
+
+        margin-top:
+            0;
+
+        font-size:
+            18px;
+
+        color:
+            #f9fafb;
+    }
+
+    .card-description {
+
+        color:
+            #9ca3af;
+
+        font-size:
+            13px;
+
+        margin-bottom:
+            18px;
+    }
+
+    /* =====================================================
+       FORMS
+       ===================================================== */
+
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
+
+        width:
+            100%;
+
+        padding:
+            12px;
+
+        margin-bottom:
+            12px;
+
+        background:
+            #1f2937;
+
+        border:
+            1px solid #374151;
+
+        border-radius:
+            7px;
+
+        color:
+            #f9fafb;
+
+        outline:
+            none;
+    }
+
+    input:focus {
+
+        border-color:
+            #3b82f6;
+    }
+
+    input::placeholder {
+
+        color:
+            #6b7280;
+    }
+
+    button {
+
+        width:
+            100%;
+
+        padding:
+            12px;
+
+        border:
+            none;
+
+        border-radius:
+            7px;
+
+        background:
+            #2563eb;
+
+        color:
+            white;
+
+        font-weight:
+            600;
+
+        cursor:
+            pointer;
+
+        transition:
+            0.2s;
+    }
+
+    button:hover {
+
+        background:
+            #1d4ed8;
+    }
+
+    .download-btn {
+
+        display:
+            inline-block;
+
+        padding:
+            10px 18px;
+
+        background:
+            #059669;
+
+        color:
+            white;
+
+        text-decoration:
+            none;
+
+        border-radius:
+            7px;
+
+        font-size:
+            13px;
+
+        font-weight:
+            600;
+    }
+
+    .download-btn:hover {
+
+        background:
+            #047857;
+    }
+
+    /* =====================================================
+       MESSAGES
+       ===================================================== */
+
+    .message {
+
+        padding:
+            13px 16px;
+
+        border-radius:
+            8px;
+
+        margin-bottom:
+            20px;
+
+        font-size:
+            14px;
+    }
+
+    .success {
+
+        background:
+            rgba(16,185,129,0.12);
+
+        color:
+            #34d399;
+
+        border:
+            1px solid
+            rgba(16,185,129,0.25);
+    }
+
+    .error {
+
+        background:
+            rgba(239,68,68,0.12);
+
+        color:
+            #f87171;
+
+        border:
+            1px solid
+            rgba(239,68,68,0.25);
+    }
+
+    /* =====================================================
+       PREDICTION RESULT
+       ===================================================== */
+
+    .prediction-result {
+
+        margin-top:
+            18px;
+
+        padding:
+            18px;
+
+        background:
+            #172033;
+
+        border-radius:
+            9px;
+
+        border-left:
+            4px solid #3b82f6;
+    }
+
+    .prediction-score {
+
+        font-size:
+            30px;
+
+        font-weight:
+            700;
+
+        color:
+            #60a5fa;
+    }
+
+    .prediction-performance {
+
+        color:
+            #34d399;
+
+        font-weight:
+            600;
+    }
+
+    /* =====================================================
+       TABLE
+       ===================================================== */
+
+    .table-card {
+
+        margin-top:
+            20px;
+    }
+
+    .table-header {
+
+        display:
+            flex;
+
+        justify-content:
+            space-between;
+
+        align-items:
+            center;
+
+        margin-bottom:
+            15px;
+    }
+
+    .table-container {
+
+        overflow-x:
+            auto;
+    }
+
+    table {
+
+        width:
+            100%;
+
+        border-collapse:
+            collapse;
+    }
+
+    th {
+
+        background:
+            #1f2937;
+
+        color:
+            #9ca3af;
+
+        padding:
+            13px;
+
+        font-size:
+            12px;
+
+        text-transform:
+            uppercase;
+
+        letter-spacing:
+            0.5px;
+    }
+
+    td {
+
+        padding:
+            13px;
+
+        border-bottom:
+            1px solid #1f2937;
+
+        text-align:
+            center;
+
+        font-size:
+            14px;
+    }
+
+    tr:hover {
+
+        background:
+            #172033;
+    }
+
+    .rank {
+
+        color:
+            #60a5fa;
+
+        font-weight:
+            700;
+    }
+
+    .score {
+
+        font-weight:
+            700;
+    }
+
+    /* =====================================================
+       PERFORMANCE BADGES
+       ===================================================== */
+
+    .badge {
+
+        display:
+            inline-block;
+
+        padding:
+            5px 10px;
+
+        border-radius:
+            20px;
+
+        font-size:
+            11px;
+
+        font-weight:
+            600;
+    }
+
+    .outstanding {
+
+        background:
+            rgba(168,85,247,0.15);
+
+        color:
+            #c084fc;
+    }
+
+    .excellent {
+
+        background:
+            rgba(59,130,246,0.15);
+
+        color:
+            #60a5fa;
+    }
+
+    .good {
+
+        background:
+            rgba(16,185,129,0.15);
+
+        color:
+            #34d399;
+    }
+
+    .average {
+
+        background:
+            rgba(234,179,8,0.15);
+
+        color:
+            #facc15;
+    }
+
+    .below {
+
+        background:
+            rgba(249,115,22,0.15);
+
+        color:
+            #fb923c;
+    }
+
+    .poor {
+
+        background:
+            rgba(239,68,68,0.15);
+
+        color:
+            #f87171;
+    }
+
+    /* =====================================================
+       CHARTS
+       ===================================================== */
+
+    .chart-container {
+
+        position:
+            relative;
+
+        height:
+            320px;
+    }
+
+    /* =====================================================
+       EMPTY STATE
+       ===================================================== */
+
+    .empty {
+
+        text-align:
+            center;
+
+        padding:
+            40px;
+
+        color:
+            #6b7280;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+
+    @media (max-width: 1000px) {
+
+        .stats {
+
+            grid-template-columns:
+                repeat(2, 1fr);
+        }
+
+        .grid {
+
+            grid-template-columns:
+                1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+
+        .sidebar {
+
+            position:
+                relative;
+
+            width:
+                100%;
+
+            height:
+                auto;
+        }
+
+        .main {
+
+            margin-left:
+                0;
+
+            padding:
+                15px;
+        }
+
+        .stats {
+
+            grid-template-columns:
+                1fr;
+        }
+    }
+
+</style>
+```
+
+</head>
+
+<body>
+
+<!-- =========================================================
+     SIDEBAR
+     ========================================================= -->
+
+<div class="sidebar">
+
+```
+<div class="logo">
+    Student<span>Analytics</span>
+</div>
+
+<a href="/" class="nav-item active">
+    📊 Dashboard
+</a>
+
+<a href="#prediction" class="nav-item">
+    🎯 Prediction
+</a>
+
+<a href="#leaderboard" class="nav-item">
+    🏆 Leaderboard
+</a>
+
+<a href="#analytics" class="nav-item">
+    📈 Analytics
+</a>
+```
+
+</div>
+
+<!-- =========================================================
+     MAIN
+     ========================================================= -->
+
+<div class="main">
+
+```
+<!-- HEADER -->
+
+<div class="header">
+
+    <div>
+
+        <h1>
+            Student Performance Dashboard
+        </h1>
+
+        <p>
+            Machine Learning based academic performance analysis
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     MESSAGE
+     ===================================================== -->
+
+{% if message %}
+
+    <div class="message {{ message_type }}">
+
+        {{ message }}
+
+    </div>
+
+{% endif %}
+
+
+<!-- =====================================================
+     STATISTICS
+     ===================================================== -->
+
+<div class="stats">
+
+    <div class="stat-card">
+
+        <div class="stat-title">
+            TOTAL STUDENTS
+        </div>
+
+        <div class="stat-value">
+            {{ dashboard.total }}
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-title">
+            AVERAGE SCORE
+        </div>
+
+        <div class="stat-value">
+            {{ dashboard.average }} / 20
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-title">
+            HIGHEST SCORE
+        </div>
+
+        <div class="stat-value">
+            {{ dashboard.highest }} / 20
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-title">
+            LOWEST SCORE
+        </div>
+
+        <div class="stat-value">
+            {{ dashboard.lowest }} / 20
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     INPUT SECTION
+     ===================================================== -->
+
+<div class="grid" id="prediction">
+
+
+    <!-- DATASET UPLOAD -->
+
+    <div class="card">
+
+        <h2>
+            📂 Upload Dataset
+        </h2>
+
+        <p class="card-description">
+
+            Upload a CSV file containing student academic
+            information. The system will automatically
+            predict the performance of every student.
+
+        </p>
+
+        <form
+            action="/upload"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <input
+                type="file"
+                name="file"
+                accept=".csv"
+                required
+            >
+
+            <button type="submit">
+                Upload Dataset & Predict
+            </button>
+
+        </form>
+
+        <p class="card-description">
+
+            Required columns:
+            <strong>
+                studytime, absences, G1, G2
+            </strong>
+
+            Optional:
+            <strong>
+                name
+            </strong>
+
+        </p>
+
+    </div>
+
+
+    <!-- MANUAL PREDICTION -->
+
+    <div class="card">
+
+        <h2>
+            🎯 Manual Prediction
+        </h2>
+
+        <p class="card-description">
+
+            Enter the details of an individual student.
+
+        </p>
+
+        <form method="POST">
+
+            <input
+                name="name"
+                type="text"
+                placeholder="Student Name"
+                required
+            >
+
+            <input
+                name="studytime"
+                type="number"
+                step="any"
+                min="0"
+                max="12"
+                placeholder="Study Time (0 - 12)"
+                required
+            >
+
+            <input
+                name="absences"
+                type="number"
+                step="any"
+                min="0"
+                max="22"
+                placeholder="Absences (0 - 22)"
+                required
+            >
+
+            <input
+                name="g1"
+                type="number"
+                step="any"
+                min="0"
+                max="20"
+                placeholder="G1 (0 - 20)"
+                required
+            >
+
+            <input
+                name="g2"
+                type="number"
+                step="any"
+                min="0"
+                max="20"
+                placeholder="G2 (0 - 20)"
+                required
+            >
+
+            <button type="submit">
+                Predict Student Performance
+            </button>
+
+        </form>
+
+
+        {% if prediction is not none %}
+
+        <div class="prediction-result">
+
+            <div>
+                Predicted Final Score
+            </div>
+
+            <div class="prediction-score">
+
+                {{ prediction }} / 20
+
+            </div>
+
+            <div>
+
+                Performance:
+                <span class="prediction-performance">
+
+                    {{ performance }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     CHARTS
+     ===================================================== -->
+
+{% if students %}
+
+<div class="grid" id="analytics">
+
+
+    <!-- SCORE CHART -->
+
+    <div class="card">
+
+        <h2>
+            📊 Student Scores
+        </h2>
+
+        <p class="card-description">
+            Predicted final scores of students
+        </p>
+
+        <div class="chart-container">
+
+            <canvas id="scoreChart"></canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- PERFORMANCE CHART -->
+
+    <div class="card">
+
+        <h2>
+            📈 Performance Distribution
+        </h2>
+
+        <p class="card-description">
+            Distribution of students by performance level
+        </p>
+
+        <div class="chart-container">
+
+            <canvas id="performanceChart"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     LEADERBOARD
+     ===================================================== -->
+
+<div class="card table-card" id="leaderboard">
+
+    <div class="table-header">
+
+        <div>
+
+            <h2>
+                🏆 Student Leaderboard
+            </h2>
+
+            <p class="card-description">
+                Students ranked according to predicted performance
+            </p>
+
+        </div>
+
+        <a
+            href="/download"
+            class="download-btn"
+        >
+            ⬇ Download Results
+        </a>
+
+    </div>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Rank
+                    </th>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Predicted G3
+                    </th>
+
+                    <th>
+                        Performance
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for student in students %}
+
+                <tr>
+
+                    <td class="rank">
+
+                        #{{ student.rank }}
+
+                    </td>
+
+
+                    <td>
+
+                        {{ student.name }}
+
+                    </td>
+
+
+                    <td class="score">
+
+                        {{ student.score }} / 20
+
+                    </td>
+
+
+                    <td>
+
+                        {% if student.performance == "Outstanding" %}
+
+                        <span class="badge outstanding">
+                            Outstanding
+                        </span>
+
+                        {% elif student.performance == "Excellent" %}
+
+                        <span class="badge excellent">
+                            Excellent
+                        </span>
+
+                        {% elif student.performance == "Good" %}
+
+                        <span class="badge good">
+                            Good
+                        </span>
+
+                        {% elif student.performance == "Average" %}
+
+                        <span class="badge average">
+                            Average
+                        </span>
+
+                        {% elif student.performance == "Below Average" %}
+
+                        <span class="badge below">
+                            Below Average
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge poor">
+                            Poor
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="card empty">
+
+    <h2>
+        No Student Data Yet
+    </h2>
+
+    <p>
+        Upload a CSV dataset or enter a student manually
+        to generate predictions.
+    </p>
+
+</div>
+
+{% endif %}
+```
+
+</div>
+
+<!-- =========================================================
+     CHART JAVASCRIPT
+     ========================================================= -->
+
+{% if students %}
+
+<script>
+
+    // ---------------------------------------------------------
+    // STUDENT DATA FROM FLASK
+    // ---------------------------------------------------------
+
+    const studentNames =
+        {{ students | map(attribute='name') | list | tojson }};
+
+    const studentScores =
+        {{ students | map(attribute='score') | list | tojson }};
+
+
+    // ---------------------------------------------------------
+    // SCORE BAR CHART
+    // ---------------------------------------------------------
+
+    const scoreCanvas =
+        document.getElementById("scoreChart");
+
+    new Chart(scoreCanvas, {
+
+        type: "bar",
+
+        data: {
+
+            labels: studentNames,
+
+            datasets: [
+
+                {
+
+                    label: "Predicted Score",
+
+                    data: studentScores,
+
+                    borderWidth: 1
+
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            scales: {
+
+                y: {
+
+                    beginAtZero: true,
+
+                    max: 20,
+
+                    ticks: {
+
+                        color: "#9ca3af"
+
+                    },
+
+                    grid: {
+
+                        color:
+                            "rgba(156,163,175,0.1)"
+
+                    }
+
+                },
+
+                x: {
+
+                    ticks: {
+
+                        color: "#9ca3af",
+
+                        maxRotation: 45,
+
+                        minRotation: 0
+
+                    },
+
+                    grid: {
+
+                        display: false
+
+                    }
+
+                }
+
+            },
+
+            plugins: {
+
+                legend: {
+
+                    labels: {
+
+                        color: "#e5e7eb"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+
+    // ---------------------------------------------------------
+    // PERFORMANCE DISTRIBUTION
+    // ---------------------------------------------------------
+
+    const performanceData = [
+
+        {{ dashboard.outstanding }},
+
+        {{ dashboard.excellent }},
+
+        {{ dashboard.good }},
+
+        {{ dashboard.average_count }},
+
+        {{ dashboard.below_average }},
+
+        {{ dashboard.poor }}
+
+    ];
+
+
+    const performanceCanvas =
+        document.getElementById("performanceChart");
+
+
+    new Chart(performanceCanvas, {
+
+        type: "doughnut",
+
+        data: {
+
+            labels: [
+
+                "Outstanding",
+                "Excellent",
+                "Good",
+                "Average",
+                "Below Average",
+                "Poor"
+
+            ],
+
+            datasets: [
+
+                {
+
+                    data: performanceData,
+
+                    borderWidth: 2
+
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: {
+
+                    position: "bottom",
+
+                    labels: {
+
+                        color: "#e5e7eb",
+
+                        padding: 15
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+</script>
+
+{% endif %}
+
+</body>
+
+</html>
+
