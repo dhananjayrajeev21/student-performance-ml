@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from flask import Flask, request, render_template, send_file
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
@@ -1149,6 +1148,4 @@ if __name__ == "__main__":
     app.run(
         debug=True,
         host="127.0.0.1",
-        port=5000
->>>>>>> 8ec7f90 (Add requirements and port configuration)
-    )
+        port=5000)
