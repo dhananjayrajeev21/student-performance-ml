@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, send_file
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
 import io
 import os
 
@@ -8,31 +10,53 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # ============================================================
-# LOAD TRAINING DATASET
+# LOAD & TRAIN MODEL
 # ============================================================
 
 try:
     df = pd.read_csv("student_performance_dataset.csv")
 
-    required_cols = ["studytime", "absences", "G1", "G2", "G3"]
+    required_columns = ["studytime", "absences", "G1", "G2", "G3"]
 
-    for col in required_cols:
-        if col not in df.columns:
-            raise ValueError(f"Missing column: {col}")
+    if not all(col in df.columns for col in required_columns):
+        raise ValueError("Dataset missing required columns")
 
-    df = df[required_cols].dropna()
+    df = df[required_columns].dropna()
 
-    X = df[["studytime", "absences", "G1", "G2"]]
+    # 🔥 FEATURE ENGINEERING
+    df["avg_score"] = (df["G1"] + df["G2"]) / 2
+    df["improvement"] = df["G2"] - df["G1"]
+
+    X = df[["studytime", "absences", "G1", "G2", "avg_score", "improvement"]]
     y = df["G3"]
 
-    model = RandomForestRegressor(n_estimators=200, random_state=42)
-    model.fit(X, y)
+    # 🔥 TRAIN TEST SPLIT
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    # 🔥 OPTIMIZED MODEL
+    model = RandomForestRegressor(
+        n_estimators=500,
+        max_depth=10,
+        min_samples_split=5,
+        min_samples_leaf=2,
+        random_state=42
+    )
+
+    model.fit(X_train, y_train)
+
+    # 🔥 ACCURACY (for logs + viva)
+    y_pred = model.predict(X_test)
+    accuracy = r2_score(y_test, y_pred)
 
     print("Model trained successfully")
+    print("Accuracy (R2 Score):", round(accuracy * 100, 2), "%")
 
 except Exception as e:
-    print("ERROR LOADING DATASET:", e)
+    print("ERROR:", e)
     model = None
+
 
 # ============================================================
 # GLOBAL STORAGE
@@ -40,37 +64,39 @@ except Exception as e:
 
 students = []
 
+
 # ============================================================
-# PERFORMANCE CATEGORY
+# PERFORMANCE CLASSIFICATION (IMPROVED)
 # ============================================================
 
 def get_performance(score):
-    if score >= 18:
+    if score >= 17:
         return "Outstanding"
-    elif score >= 16:
+    elif score >= 15:
         return "Excellent"
-    elif score >= 14:
+    elif score >= 13:
         return "Good"
-    elif score >= 12:
+    elif score >= 11:
         return "Average"
-    elif score >= 10:
+    elif score >= 9:
         return "Below Average"
     else:
         return "Poor"
 
+
 # ============================================================
-# SORT + RANK
+# PREPARE LEADERBOARD
 # ============================================================
 
 def prepare_students():
     global students
     students = sorted(students, key=lambda x: x["score"], reverse=True)
-
     for i, s in enumerate(students):
         s["rank"] = i + 1
 
+
 # ============================================================
-# DASHBOARD STATS
+# DASHBOARD
 # ============================================================
 
 def get_dashboard_data():
@@ -115,8 +141,9 @@ def get_dashboard_data():
         "poor": counts["Poor"]
     }
 
+
 # ============================================================
-# HOME ROUTE
+# HOME
 # ============================================================
 
 @app.route("/", methods=["GET", "POST"])
@@ -131,7 +158,7 @@ def home():
     if request.method == "POST":
         try:
             if model is None:
-                raise ValueError("Model not loaded")
+                raise ValueError("Model not available")
 
             name = request.form.get("name", "").strip()
             if not name:
@@ -142,12 +169,25 @@ def home():
             g1 = float(request.form.get("g1", 0))
             g2 = float(request.form.get("g2", 0))
 
-            input_df = pd.DataFrame(
-                [[studytime, absences, g1, g2]],
-                columns=["studytime", "absences", "G1", "G2"]
-            )
+            # validation
+            if not (0 <= studytime <= 12):
+                raise ValueError("Studytime must be 0–12")
+            if not (0 <= absences <= 22):
+                raise ValueError("Absences must be 0–22")
+            if not (0 <= g1 <= 20):
+                raise ValueError("G1 must be 0–20")
+            if not (0 <= g2 <= 20):
+                raise ValueError("G2 must be 0–20")
+
+            # 🔥 NEW FEATURES
+            avg_score = (g1 + g2) / 2
+            improvement = g2 - g1
+
+            input_df = pd.DataFrame([[studytime, absences, g1, g2, avg_score, improvement]],
+                                    columns=["studytime", "absences", "G1", "G2", "avg_score", "improvement"])
 
             pred = model.predict(input_df)[0]
+
             prediction = round(max(0, min(20, pred)), 2)
             performance = get_performance(prediction)
 
@@ -166,20 +206,19 @@ def home():
             message = str(e)
             message_type = "error"
 
-    dashboard = get_dashboard_data()
-
     return render_template(
         "index.html",
         prediction=prediction,
         performance=performance,
         students=students,
-        dashboard=dashboard,
+        dashboard=get_dashboard_data(),
         message=message,
         message_type=message_type
     )
 
+
 # ============================================================
-# DATASET UPLOAD
+# UPLOAD CSV
 # ============================================================
 
 @app.route("/upload", methods=["POST"])
@@ -187,39 +226,48 @@ def upload():
     global students
 
     try:
-        file = request.files.get("file")
+        if model is None:
+            raise ValueError("Model not loaded")
 
-        if not file:
-            raise ValueError("No file uploaded")
+        file = request.files.get("file")
+        if not file or not file.filename.endswith(".csv"):
+            raise ValueError("Upload valid CSV")
 
         df = pd.read_csv(file)
 
-        required_cols = ["studytime", "absences", "G1", "G2"]
+        required = ["studytime", "absences", "G1", "G2"]
+        if not all(col in df.columns for col in required):
+            raise ValueError("Missing required columns")
 
-        for col in required_cols:
-            if col not in df.columns:
-                raise ValueError(f"Missing column: {col}")
-
+        df = df.dropna(subset=required)
         students = []
 
         for i, row in df.iterrows():
-            input_df = pd.DataFrame(
-                [[row["studytime"], row["absences"], row["G1"], row["G2"]]],
-                columns=["studytime", "absences", "G1", "G2"]
-            )
+            studytime = float(row["studytime"])
+            absences = float(row["absences"])
+            g1 = float(row["G1"])
+            g2 = float(row["G2"])
+
+            avg_score = (g1 + g2) / 2
+            improvement = g2 - g1
+
+            input_df = pd.DataFrame([[studytime, absences, g1, g2, avg_score, improvement]],
+                                    columns=["studytime", "absences", "G1", "G2", "avg_score", "improvement"])
 
             pred = model.predict(input_df)[0]
             score = round(max(0, min(20, pred)), 2)
 
+            name = row["name"] if "name" in df.columns else f"Student {i+1}"
+
             students.append({
-                "name": row.get("name", f"Student {i+1}"),
+                "name": name,
                 "score": score,
                 "performance": get_performance(score)
             })
 
         prepare_students()
 
-        message = f"{len(students)} students processed"
+        message = f"Predicted {len(students)} students"
         message_type = "success"
 
     except Exception as e:
@@ -228,11 +276,14 @@ def upload():
 
     return render_template(
         "index.html",
+        prediction=None,
+        performance=None,
         students=students,
         dashboard=get_dashboard_data(),
         message=message,
         message_type=message_type
     )
+
 
 # ============================================================
 # DOWNLOAD
@@ -255,6 +306,7 @@ def download():
         as_attachment=True,
         download_name="results.csv"
     )
+
 
 # ============================================================
 # RUN
